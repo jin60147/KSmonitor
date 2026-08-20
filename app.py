@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import hashlib
 import os
 import re
 import uuid
@@ -40,7 +42,25 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 serializer = URLSafeSerializer(SECRET_KEY, salt="keepsilent-session")
 password_hash = PasswordHash.recommended()
-fernet = Fernet(ENCRYPTION_KEY.encode()) if ENCRYPTION_KEY else None
+
+def build_fernet():
+    # Prefer an explicitly configured Fernet key. If Railway does not expose
+    # ENCRYPTION_KEY to this service, derive a stable Fernet key from SECRET_KEY.
+    explicit = (ENCRYPTION_KEY or "").strip()
+    if explicit:
+        try:
+            return Fernet(explicit.encode())
+        except Exception:
+            pass
+
+    # SECRET_KEY must be stable across deploys. Do not use the default value in production.
+    if SECRET_KEY and SECRET_KEY != "dev-secret-change-me":
+        derived = base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode()).digest())
+        return Fernet(derived)
+
+    return None
+
+fernet = build_fernet()
 worker_task = None
 
 
@@ -353,7 +373,7 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 @app.get("/health")
 async def health():
-    return {"ok": True}
+    return {"ok": True, "encryption_ready": fernet is not None}
 
 
 @app.get("/login", response_class=HTMLResponse)
