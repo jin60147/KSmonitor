@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>登入</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><main class="auth-shell"><section class="auth-card">
+  <div class="eyebrow">KEEPSILENT STOCK MONITOR</div><h1>登入</h1><p>管理你的商品與補貨通知。</p>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form action="/login" method="post">
+    <label>帳號<input name="username" autocomplete="username" required></label>
+    <label>密碼<input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="button primary full">登入</button>
+  </form>
+  {% if allow_signup %}<p class="auth-foot">還沒有帳號？ <a href="/signup">建立帳號</a></p>{% endif %}
+</section></main></body></html>

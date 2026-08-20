@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KEEPSILENT Stock Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main class="shell">
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">ONLINE STOCK MONITOR</div>
+      <h1>KEEPSILENT 補貨監控</h1>
+      <p>登入帳號：{{ username }}</p>
+    </div>
+    <form action="/logout" method="post"><button class="button ghost">登出</button></form>
+  </header>
+
+  <section class="panel">
+    <div class="section-title"><h2>新增商品監控</h2><span>{{ watches|length }} 個監控</span></div>
+    <form action="/watch" method="post" class="add-grid">
+      <label>商品網址
+        <input type="url" name="url" required placeholder="https://www.keepsilentshhh.com/product/...">
+      </label>
+      <label>尺寸
+        <input name="size" placeholder="M / L / XL / 32">
+      </label>
+      <label>檢查頻率
+        <select name="interval_seconds">
+          <option value="60">1 分鐘</option>
+          <option value="120" selected>2 分鐘</option>
+          <option value="300">5 分鐘</option>
+          <option value="600">10 分鐘</option>
+        </select>
+      </label>
+      <button class="button primary">加入監控</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="section-title"><h2>我的監控</h2><span>只顯示你的資料</span></div>
+    {% if watches %}
+      <div class="watch-list">
+      {% for w in watches %}
+        <article class="watch-row">
+          <div class="watch-main">
+            <div class="watch-heading">
+              <h3>{{ w.title or "商品讀取中…" }}</h3>
+              <span class="badge {{ w.status }}">{{ w.status }}</span>
+              {% if not w.enabled %}<span class="badge paused">PAUSED</span>{% endif %}
+            </div>
+            <div class="muted">尺寸：{{ w.size or "不限" }} · 每 {{ w.interval_seconds }} 秒</div>
+            <a href="{{ w.url }}" target="_blank" rel="noreferrer">{{ w.url }}</a>
+            <div class="muted">上次檢查：{{ w.last_checked_at or "尚未" }}{% if w.last_notified_at %} · 上次通知：{{ w.last_notified_at }}{% endif %}</div>
+            {% if w.last_error %}<div class="error">{{ w.last_error }}</div>{% endif %}
+          </div>
+          <div class="actions">
+            <form action="/watch/{{ w.id }}/check" method="post"><button class="button ghost">立即檢查</button></form>
+            <form action="/watch/{{ w.id }}/toggle" method="post"><button class="button ghost">{{ "啟用" if not w.enabled else "暫停" }}</button></form>
+            <form action="/watch/{{ w.id }}/delete" method="post"><button class="button danger">刪除</button></form>
+          </div>
+        </article>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">目前沒有監控商品。</div>
+    {% endif %}
+  </section>
+
+  <section class="panel" id="notifications">
+    <div class="section-title"><h2>通知設定</h2><span>每個帳號獨立</span></div>
+    <div class="status-grid">
+      <div class="status-card"><span>Discord</span><strong>{{ "已設定" if discord_set else "未設定" }}</strong></div>
+      <div class="status-card"><span>Telegram</span><strong>{{ "已設定" if telegram_set else "未設定" }}</strong></div>
+    </div>
+
+    <form action="/settings/notifications" method="post" class="settings-grid">
+      <div class="settings-block">
+        <h3>Discord</h3>
+        <label>Webhook URL
+          <input type="password" name="discord_webhook_url" placeholder="留空 = 保留目前設定">
+        </label>
+        <label class="check"><input type="checkbox" name="clear_discord" value="1"> 清除 Discord 設定</label>
+      </div>
+      <div class="settings-block">
+        <h3>Telegram</h3>
+        <label>Bot Token
+          <input type="password" name="telegram_bot_token" placeholder="留空 = 保留目前設定">
+        </label>
+        <label>Chat ID
+          <input name="telegram_chat_id" value="{{ telegram_chat }}" placeholder="例如 123456789">
+        </label>
+        <label class="check"><input type="checkbox" name="clear_telegram" value="1"> 清除 Telegram 設定</label>
+      </div>
+      <div class="settings-actions"><button class="button primary">儲存通知設定</button></div>
+    </form>
+
+    <form action="/settings/test" method="post" class="test-form"><button class="button ghost">傳送測試通知</button></form>
+    {% if request.query_params.get('test') == 'ok' %}<div class="success">測試通知已送出。</div>{% endif %}
+    {% if request.query_params.get('test') == 'error' %}<div class="error">通知發送失敗，請檢查 Webhook / Bot Token / Chat ID。</div>{% endif %}
+  </section>
+</main>
+</body>
+</html>

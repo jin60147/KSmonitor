@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>註冊</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><main class="auth-shell"><section class="auth-card">
+  <div class="eyebrow">KEEPSILENT STOCK MONITOR</div><h1>建立帳號</h1><p>每個帳號都有獨立的監控與通知設定。</p>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form action="/signup" method="post">
+    <label>帳號<input name="username" autocomplete="username" required minlength="3" maxlength="40"></label>
+    <label>密碼<input name="password" type="password" autocomplete="new-password" required minlength="8"></label>
+    <label>確認密碼<input name="password2" type="password" autocomplete="new-password" required minlength="8"></label>
+    <button class="button primary full">建立帳號</button>
+  </form>
+  <p class="auth-foot"><a href="/login">回登入</a></p>
+</section></main></body></html>
